@@ -1,0 +1,3 @@
+http://www.benchmarkemail.com/blogs/rss.xml
+http://www.feedforall.com/sample.xml
+http://www.feedforall.com/sample-feed.xml
