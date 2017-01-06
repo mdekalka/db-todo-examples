@@ -8,7 +8,7 @@ let connection;
 connection = mysql.createConnection({
     host: '127.0.0.1',
     user: 'root',
-    password: 'hybertyhui123',
+    password: '', // pass
     database: 'timetrack'
 });
 
