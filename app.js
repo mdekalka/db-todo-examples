@@ -1,36 +1,21 @@
-var express = require('express');
-var fs = require('fs');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const favicon = require('serve-favicon');
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-var EventEmitter = require('events').EventEmitter;
+const EventEmitter = require('events').EventEmitter;
+const redis = require('redis');
 
-var mongo = require('mongodb');
-// Monk is a layer that provides simple yet substantial usability improvements for MongoDB usage within Node.JS.
-// var monk = require('monk');
-// var db = monk('localhost:27017/nodeTest');
 
-// var dbName = 'nodeTest';
-// var connectionConfig = `mongodb://localhost:27017/${dbName}`;
+const index = require('./routes/index');
+const hello = require('./routes/hello');
 
-// mongoose.connect(connectionConfig);
-// var db = mongoose.connection;
-
-// db.on('error', function() {
-//     console.log('connection error');
-// });
-
-// db.once('open', function() {
-//     console.log('connection established')
-// });
-
-var index = require('./routes/index');
-var hello = require('./routes/hello');
-var moviesRoute = require('./routes/movies');
+const mongoRoute = require('./routes/mongoRoutes');
 const postgreRoute = require('./routes/postgreRoute');
+const mysqlRoute = require('./routes/mysqlRoute');
 
 var app = express();
 
@@ -39,7 +24,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+// app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 // app.use(express.favicon());
 
 // App.use is just a middleware functions
@@ -52,9 +37,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', index);
 app.use('/hi', hello);
 
-app.use('/api', moviesRoute);
-
+app.use('/mongo', mongoRoute);
 app.use('/postgre', postgreRoute);
+app.use('/mysql', mysqlRoute);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -75,26 +60,66 @@ app.use(function(err, req, res, next) {
 });
 
 
-// TEST API's from NodeJS Book
-// 1) consistent function flow 
-var flowStart = require('./modules/nimble-flow');
-// flowStart();
 
-// 2) Description of EventEmitter with example
-var eventsServer = require('./modules/eventemitter/index');
-// eventsServer.listen(8888);
+// Note: redis will not start on Windows without redis-server
+// https://github.com/MSOpenTech/redis
+// var redisClient = redis.createClient();
 
-// 3) Rss parser
-const parser = require('./modules/rss-parser/rss-parser');
-// parser()
+// redisClient.on('connect', function() {
+//   console.log('connected to redis')
+// });
 
-// 4)  Socket.io chat example
-const ioServer = require('./modules/chat/index');
-// ioServer.listen(8008);
+// redisClient.on('error', function(err) {
+//   console.log('redis connection error: ', err);
+// });
 
-// 5) Postgre example
-const pg = require('./modules/postgre/postgre');
+// redisClient.set('color', 'red', redisClient.primt);
+// redisClient.get('color', function(err, value) {
+//   if (err) {
+//     throw err;
+//   }
+//   console.log('Got it: ', value);
+// });
 
+// // Set hash-table values
+// redisClient.hmset('object', {
+//   'first': 'some value',
+//   'second': 'some another value'
+// }, redis.print);
+// // get the value of first property
+// redisClient.hget('object', 'first', function(err, value) {
+//   if (err) throw err;
 
+//   console.log('First value is: ', value);
+// });
+// // get hash-table keys
+// redisClient.hkeys('object', function(err, keys) {
+//   if (err) throw err;
+
+//   keys.forEach(function(key, i) {
+//     console.log(' ' + key);
+//   });
+// });
+
+// // working with lists;
+// redisClient.lpush('tasks', 'first value', redis.print);
+// redisClient.lpush('tasks', 'second value', redis.print);
+// redisClient.lrange('tasks', 0, -1, function(err, items) {
+//   if (err) throw err;
+//   items.forEach(function(item, i) {
+//     console.log(' ' + item);
+//   });
+// });
+
+// // unordered group of strings
+// redisClient.sadd('ip', '204.10.65.56', redis.print);
+// // same value will bei gnored
+// redisClient.sadd('ip', '204.10.65.56', redis.print);
+// redisClient.sadd('ip', '74.10.65.56', redis.print);
+// redisClient.smembers('ip', function(err, members) {
+//   if (err) throw err;
+
+//   console.log(members);
+// });
 
 module.exports = app;
