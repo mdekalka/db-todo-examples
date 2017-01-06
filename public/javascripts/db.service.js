@@ -68,7 +68,6 @@
             return $http.delete(`${path}/${id}`)
                 .then(successHandler)
                 .then(id => {
-                    debugger
                     const index = this.users.map(user => {
                         return user.id;
                     }).indexOf(id);
