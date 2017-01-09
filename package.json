@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "bluebird": "^3.3.4",
     "body-parser": "~1.15.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.2.0",
@@ -21,6 +22,7 @@
     "oauth2orize": "^1.6.0",
     "passport": "^0.3.2",
     "pg": "^6.1.2",
+    "pg-promise": "^3.2.3",
     "redis": "^2.6.3",
     "request": "^2.79.0",
     "serve-favicon": "~2.3.0",

@@ -1,43 +1,44 @@
 const express = require('express');
 const pg = require('pg');
+const userQueries = require('../models/postgreUsers');
 
 // db/name/surname/server/dbname
-const conString = "postgres://postgres@localhost:5432/test";
+const conString = process.env.DATABASE_URL || "postgres://postgres@localhost:5432/test";
 const client = new pg.Client(conString);
 const router = express.Router();
 
-client.connect(function(err, connection) {
-    if (err) {
-        return console.error('error fetching client from pool', err)
-    }
-    console.log('postgre connected')
+// http://mherman.org/blog/2015/02/12/postgresql-and-nodejs/#.WG5O0fl96Uk
+// http://mherman.org/blog/2016/03/13/designing-a-restful-api-with-node-and-postgres/#.WHNPafl96Uk
+pg.connect(conString, (err, client, done) => {
+    const query = client.query(
+    'CREATE TABLE IF NOT EXISTS users(_id SERIAL PRIMARY KEY, name VARCHAR(40) not null, age INT not null)');
+
+    query.on('end', () => {
+        done();
+    });
 });
 
 // Get all users
 router.route('/users').get(function(req, res) {
-    const query = client.query('SELECT * FROM users');
+    userQueries.getUsers((err, users) => {
+        if (err) {
+            res.status(500).json({ error: true, data: err });
+        }
 
-    query.on('row', function(row, result) {
-        result.addRow(row);
-    });
-
-    query.on('end', function(result) {
-
-        res.json(result.rows)
+        res.json(users);
     });
 });
 
 // Get user by id
 router.route('/users/:id').get(function(req, res) {
     const id = req.params.id;
-    const query = client.query('SELECT * FROM users WHERE _id=($1)', [id]);
 
-    query.on('row', function(row, result) {
-        result.addRow(row);
-    });
+    userQueries.getUserById(id, (err, user) => {
+        if (err) {
+            res.status(500).json({ error: true, data: err });
+        }
 
-    query.on('end', function(result) {
-        res.json(result.rows[0])
+        res.json(user);
     });
 });
 
@@ -45,14 +46,12 @@ router.route('/users/:id').get(function(req, res) {
 router.route('/users').post(function(req, res) {
     const user = req.body.user;
 
-    const userData = [user.name, user.age];
-
-    client.query("INSERT INTO users(name, age) values($1, $2) RETURNING *", userData, function(err, result) {
+    userQueries.addUserById(user, (err, user) => {
         if (err) {
-            return res.send(err);
+            res.status(500).json({ error: true, data: err });
         }
-        
-        res.json(result.rows[0]);
+
+        res.json(user);
     });
 });
 
@@ -60,15 +59,11 @@ router.route('/users').post(function(req, res) {
 router.route('/users/:id').delete(function(req, res) {
     const id = req.params.id;
 
-    client.query("DELETE FROM users WHERE _id=($1)", [id]);
-    
-    const query = client.query("SELECT * FROM users WHERE _id=($1)", [id]);
+    userQueries.deleteUserById(id, (err, id) => {
+        if (err) {
+            res.status(500).json({ error: true, data: err });
+        }
 
-    query.on('row', (row, result) => {
-        result.addRow(row);
-    });
-
-    query.on('end', (result) => {
         res.json(parseInt(id, 10));
     });
 });
@@ -78,20 +73,12 @@ router.route('/users/:id').put(function(req, res) {
     const user = req.body.user;
     const id = req.params.id;
 
-    client.query("UPDATE users SET name=($1), age=($2) WHERE _id=($3) RETURNING *", [user.name, user.age, id], function(err, result) {
+    userQueries.updateUserById(id, user, (err, user) => {
         if (err) {
-            return res.send(err);
+            res.status(500).json({ error: true, data: err });
         }
 
-        const query = client.query("SELECT * FROM users WHERE _id=($1)", [id]);
-
-        query.on('row', (row, result) => {
-            result.addRow(row);
-        });
-
-        query.on('end', (result) => {
-            res.json(result.rows[0]);
-        });
+        res.json(user);
     });
 });
 
